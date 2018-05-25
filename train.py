@@ -60,7 +60,7 @@ if __name__ == "__main__":
     parser.add_argument('--highway_layers', type=int, default=1, help='number of highway layers')
     parser.add_argument('--shrink_embedding', action='store_true', help='shrink the embedding dictionary to corpus (open this if pre-trained embedding dictionary is too large, but disable this may yield better results on external corpus)')
     parser.add_argument('--model_name', default='HSCRF', help='model name')
-    parser.add_argument('--char_lstm', action='store_true', help='use lstm for characters embedding or not')
+    parser.add_argument('--char_lstm', type=int, default=0, help='use lstm/cnn/caps (0/1/2) for characters embedding, default=0')
     parser.add_argument('--allowspan', type=int, default=6, help='allowed max segment length')
     parser.add_argument('--grconv', action='store_true', help='use grconv')
 
