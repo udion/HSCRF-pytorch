@@ -50,6 +50,7 @@ class WORD_REP(nn.Module):
 			self.word_lstm_cnn = nn.LSTM(word_embedding_dim + cnn_filter_num, word_hidden_dim // 2, num_layers=word_lstm_layers, bidirectional=True,
 							  dropout=dropout_ratio)
 		elif char_lstm == 2:
+			print('dbg 0')
 			self.cnn = nn.Conv2d(1, cnn_filter_num, (3, char_embedding_dim), padding=(2, 0))
 
 			self.primary_in_channels = 1
@@ -83,12 +84,12 @@ class WORD_REP(nn.Module):
 					secondary_caps_dim = self.secondary_caps_dim
 				)
 
-			self.word_lstm_cnn = nn.LSTM(word_embedding_dim + self.num_secondary_caps*self.secondary_caps_dim, word_hidden_dim // 2, num_layers=word_lstm_layers, bidirectional=True,
-							  dropout=dropout_ratio)
+			self.word_lstm_cnn = nn.LSTM(word_embedding_dim + self.num_secondary_caps*self.secondary_caps_dim, word_hidden_dim // 2, num_layers=word_lstm_layers, bidirectional=True, dropout=dropout_ratio)
 
 		self.dropout = nn.Dropout(p=dropout_ratio)
 		self.batch_size = 1
 		self.word_seq_length = 1
+		print('dbg 1')
 
 
 	def set_batch_seq_size(self, sentence):
@@ -241,35 +242,41 @@ class WORD_REP(nn.Module):
 		return lstm_out
 
 	def caps_lstm(self, word_seq, cnn_features):
-	"""
-	return word representations with character-cnn
+		"""
+		return word representations with character-cnn
 
-	args:
-		word_seq:     word_seq_len, batch_size
-		cnn_features: word_seq_len, batch_size, word_len
+		args:
+			word_seq:     word_seq_len, batch_size
+			cnn_features: word_seq_len, batch_size, word_len
 
-	"""
-	self.set_batch_seq_size(word_seq)
-	cnn_features = cnn_features.view(cnn_features.size(0) * cnn_features.size(1), -1)
-	cnn_features = self.char_embeds(cnn_features).view(cnn_features.size(0), 1, cnn_features.size(1), -1)
-	cnn_features = self.cnn(cnn_features)
-	d_char_out = nn.functional.max_pool2d(cnn_features,
-										  kernel_size=(cnn_features.size(2), 1)).view(word_seq.size(0), self.batch_size, -1) #(word_seq.size(0), self.batch_size, -1)
-	
-	# introducing capsules
-	x_caps = d_char_out.view(d_char_out.size(0)*d_char_out.size(1), 1, -1)
-	x_caps = self.primary1d_capslayer(x_caps)
-	x_caps = self.secondary1d_capslayer(x_caps)
+		"""
+		print('dbg 2')
+		self.set_batch_seq_size(word_seq)
+		cnn_features = cnn_features.view(cnn_features.size(0) * cnn_features.size(1), -1)
+		cnn_features = self.char_embeds(cnn_features).view(cnn_features.size(0), 1, cnn_features.size(1), -1)
+		cnn_features = self.cnn(cnn_features)
+		d_char_out = nn.functional.max_pool2d(cnn_features,
+											  kernel_size=(cnn_features.size(2), 1)).view(word_seq.size(0), self.batch_size, -1) #(word_seq.size(0), self.batch_size, -1)
+		
+		# introducing capsules
+		print('dbg 3')
+		x_caps = d_char_out.view(d_char_out.size(0)*d_char_out.size(1), 1, -1)
+		print('dbg 4')
+		x_caps = self.primary1d_capslayer(x_caps)
+		print('dbg 5')
+		x_caps = self.secondary1d_capslayer(x_caps)
+		print('dbg 6')
 
-	x_caps = x_caps.view(word_seq.size(0), self.batch_size, -1)
+		x_caps = x_caps.view(word_seq.size(0), self.batch_size, -1)
+		print('dbg 7')
 
-	word_emb = self.word_embeds(word_seq)
+		word_emb = self.word_embeds(word_seq)
 
-	word_input = torch.cat((word_emb, x_caps), dim=2)
-	word_input = self.dropout(word_input)
+		word_input = torch.cat((word_emb, x_caps), dim=2)
+		word_input = self.dropout(word_input)
 
-	lstm_out, _ = self.word_lstm_cnn(word_input)
-	lstm_out = self.dropout(lstm_out)
+		lstm_out, _ = self.word_lstm_cnn(word_input)
+		lstm_out = self.dropout(lstm_out)
 
 	return lstm_out
 
@@ -339,4 +346,5 @@ class WORD_REP(nn.Module):
 		elif self.char_lstm == 1:
 			return self.cnn_lstm(word_seq, cnn_features)
 		elif self.char_lstm == 2:
+			print('dbg 8')
 			return self.caps_lstm(word_seq, cnn_features)
