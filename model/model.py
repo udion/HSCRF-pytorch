@@ -54,7 +54,7 @@ class ner_model(nn.Module):
         if not onlycrf:
             loss_scrf = self.hscrf(word_representations.transpose(0,1), scrf_mask_words, scrf_target, scrf_mask_target)
             loss = loss + loss_scrf
-        if self.char_lstm:
+        if (self.char_lstm != 1) and (self.char_lstm != 2):
             loss_lm = self.word_rep.lm_loss(forw_sentence, forw_position, back_sentence, back_position, word_seq)
             loss = loss + loss_lm
         return loss

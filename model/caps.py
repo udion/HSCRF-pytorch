@@ -86,10 +86,10 @@ class Caps1d_primary(_CapsNd_primary):
             primary_stride,
             primary_padding,
         )
-        # print('dbg primary_in_channels :', self.primary_in_channels)
+        print('dbg primary_in_channels :', self.primary_in_channels, self.num_primary_caps[0], self.primary_caps_dim)
         self.primary_conv=nn.Conv1d(
             self.primary_in_channels,
-            self.num_primary_caps*self.primary_caps_dim,
+            self.num_primary_caps[0]*self.primary_caps_dim,
             kernel_size=self.primary_kernel_size,
             stride=self.primary_stride,
             padding=self.primary_padding,

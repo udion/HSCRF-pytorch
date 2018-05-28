@@ -60,12 +60,14 @@ class WORD_REP(nn.Module):
 			self.p_k_size = 3
 			self.p_stride = 1
 			self.p_padding = 1
-
+                        print('dbg ', self.primary_caps_dim, self.primary_caps_in)
 			self.primary1d_capslayer = Caps1d_primary(
 					primary_in_channels = self.primary_in_channels,
 					num_primary_caps = self.num_primary_caps,
-					primary_caps_dim = self.primary_caps_dim
+					primary_caps_dim = self.primary_caps_dim,
+                                        primary_padding = self.p_padding
 				)
+                        print('dbg ', self.primary1d_capslayer)
 			
 			self.sec_in = _caps_pri2sec_H(
 					self.primary_caps_in,
@@ -121,7 +123,7 @@ class WORD_REP(nn.Module):
 		"""
 
 		utils.init_embedding(self.char_embeds.weight)
-		if self.char_lstm:
+		if self.char_lstm==0:
 			utils.init_lstm(self.forw_char_lstm)
 			utils.init_lstm(self.back_char_lstm)
 			utils.init_lstm(self.word_lstm_lm)
@@ -278,7 +280,7 @@ class WORD_REP(nn.Module):
 		lstm_out, _ = self.word_lstm_cnn(word_input)
 		lstm_out = self.dropout(lstm_out)
 
-	return lstm_out
+	        return lstm_out
 
 	def lm_lstm(self, forw_sentence, forw_position, back_sentence, back_position, word_seq):
 		'''
