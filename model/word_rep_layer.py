@@ -50,7 +50,7 @@ class WORD_REP(nn.Module):
 			self.word_lstm_cnn = nn.LSTM(word_embedding_dim + cnn_filter_num, word_hidden_dim // 2, num_layers=word_lstm_layers, bidirectional=True,
 							  dropout=dropout_ratio)
 		elif char_lstm == 2:
-			print('dbg 0')
+			#print('dbg 0')
 			self.cnn = nn.Conv2d(1, cnn_filter_num, (3, char_embedding_dim), padding=(2, 0))
 
 			self.primary_in_channels = 1
@@ -60,30 +60,31 @@ class WORD_REP(nn.Module):
 			self.p_k_size = 3
 			self.p_stride = 1
 			self.p_padding = 1
-                        print('dbg ', self.primary_caps_dim, self.primary_caps_in)
+                        #print('dbg ', self.primary_caps_dim, self.primary_caps_in)
 			self.primary1d_capslayer = Caps1d_primary(
 					primary_in_channels = self.primary_in_channels,
 					num_primary_caps = self.num_primary_caps,
 					primary_caps_dim = self.primary_caps_dim,
-                                        primary_padding = self.p_padding
+                                        primary_padding = self.p_padding,
+                                        cuda_enabled = True
 				)
-                        print('dbg ', self.primary1d_capslayer)
-			
+                        #print('dbg ', self.primary1d_capslayer)
+                        #print(self.primary_caps_in, self.p_k_size, self.p_stride, self.p_padding, self.num_primary_caps[0])
 			self.sec_in = _caps_pri2sec_H(
 					self.primary_caps_in,
 					self.p_k_size,
 					self.p_stride,
 					self.p_padding,
-					self.num_primary_caps
+					self.num_primary_caps[0]
 				)
 			self.num_secondary_caps = 2
 			self.secondary_caps_dim = 16
-			
 			self.secondary1d_capslayer = Caps1d_secondary(
 					secondary_in_caps = self.sec_in,
 					secondary_in_dim = self.primary_caps_dim,
 					num_secondary_caps = self.num_secondary_caps,
-					secondary_caps_dim = self.secondary_caps_dim
+					secondary_caps_dim = self.secondary_caps_dim,
+                                        cuda_enabled=True
 				)
 
 			self.word_lstm_cnn = nn.LSTM(word_embedding_dim + self.num_secondary_caps*self.secondary_caps_dim, word_hidden_dim // 2, num_layers=word_lstm_layers, bidirectional=True, dropout=dropout_ratio)
@@ -91,7 +92,7 @@ class WORD_REP(nn.Module):
 		self.dropout = nn.Dropout(p=dropout_ratio)
 		self.batch_size = 1
 		self.word_seq_length = 1
-		print('dbg 1')
+		#print('dbg 1')
 
 
 	def set_batch_seq_size(self, sentence):
@@ -252,7 +253,7 @@ class WORD_REP(nn.Module):
 			cnn_features: word_seq_len, batch_size, word_len
 
 		"""
-		print('dbg 2')
+		#print('dbg 2')
 		self.set_batch_seq_size(word_seq)
 		cnn_features = cnn_features.view(cnn_features.size(0) * cnn_features.size(1), -1)
 		cnn_features = self.char_embeds(cnn_features).view(cnn_features.size(0), 1, cnn_features.size(1), -1)
@@ -261,16 +262,16 @@ class WORD_REP(nn.Module):
 											  kernel_size=(cnn_features.size(2), 1)).view(word_seq.size(0), self.batch_size, -1) #(word_seq.size(0), self.batch_size, -1)
 		
 		# introducing capsules
-		print('dbg 3')
+		#print('dbg 3')
 		x_caps = d_char_out.view(d_char_out.size(0)*d_char_out.size(1), 1, -1)
-		print('dbg 4')
+		#print('dbg 4')
 		x_caps = self.primary1d_capslayer(x_caps)
-		print('dbg 5')
+		#print('dbg 5')
 		x_caps = self.secondary1d_capslayer(x_caps)
-		print('dbg 6')
+		#print('dbg 6')
 
 		x_caps = x_caps.view(word_seq.size(0), self.batch_size, -1)
-		print('dbg 7')
+		#print('dbg 7')
 
 		word_emb = self.word_embeds(word_seq)
 
@@ -348,5 +349,5 @@ class WORD_REP(nn.Module):
 		elif self.char_lstm == 1:
 			return self.cnn_lstm(word_seq, cnn_features)
 		elif self.char_lstm == 2:
-			print('dbg 8')
+			#print('dbg 8')
 			return self.caps_lstm(word_seq, cnn_features)
